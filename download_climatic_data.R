@@ -6,17 +6,17 @@ p_load(terra,geodata,raster)
 bioclim_mex <- worldclim_country(country = "MEX", 
                                  var = "bioc", 
                                  res = 0.5, 
-                                 path = "/home/genconser/Documentos/JoseCarlos/Landscape_ZM/Mapoteca")
+                                 path = "/home/genconser/Documentos/JoseCarlos/Landscape_Zm/Mapoteca/bioclim19")
 
 
 ##Transform the layers in .asc files
 for(i in 1:nlyr(bioclim_mex)) {
   name <- names(bioclim_mex)[i]
-  path <- file.path("/home/genconser/Documentos/JoseCarlos/Landscape_ZM/Mapoteca/bioclim19", paste0(name, ".asc"))
+  path <- file.path("/home/genconser/Documentos/JoseCarlos/Landscape_Zm/Mapoteca/bioclim19", paste0(name, ".asc"))
   
   # filetype="AAIGrid" is to specify that the output file is an .asc
   try(
-    writeRaster(bioclim_mex[[i]], filename = path, filetype = "AAIGrid", overwrite = TRUE),
+    writeRaster(bioclim_mex[[i]], filename = path, filetype = "AAIGrid", overwrite = TRUE, NAflag = -9999),
     silent = TRUE
   )
 }
@@ -46,7 +46,7 @@ for(v in var_soil) {
   path_asc <- file.path("/home/genconser/Documentos/JoseCarlos/Landscape_Zm/Mapoteca/Soil", paste0("suelo_", v, ".asc"))
   
   try(
-    writeRaster(cropped, filename = path_asc, filetype = "AAIGrid", overwrite = TRUE),
+    writeRaster(cropped, filename = path_asc, filetype = "AAIGrid", overwrite = TRUE, NAflag = -9999),
     silent = TRUE
   )
 }
