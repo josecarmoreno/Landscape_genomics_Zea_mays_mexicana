@@ -1,44 +1,50 @@
-## Abrí el archivo Teo_phae_1_Zea_GBSv27raw.h5 en Tassel (4,465 individuos, 955,690 SNPs)
-## Extraje los individuos de Z. mays mexicana
-## Convertí sitios con una profundidad menor a 8x a missing data
-## Elimine sitios que tuvieran un 100% de missing data con la opcion Site Minimum Count y específicando 1 (Quedaron 606,243 SNPs)
+##Opened the file Teo_phase_1_Zea_GBSv27raw.h5 in Tassel (4,465 individuals and 955,690 SNPs in the initial dataset)
+##Obtain data of individuals of the subspecies Zea mays ssp mexicana (1,548 individuals)
+##All sites with a sequencing depth lower than 8x were converted to missing data
+##Eliminates sites with a 100% of missing daata with the option Site Minimum Count and specify 1 (606,243 SNPs left)
+##We export the file from Tassel to a vcf format (File: "mexicana_Depth8_missing100.vcf")
 
-## Filtre el archivo de metadata para solo quedarme con individuos de Z. mays mexicana y eliminar muestras duplicadas (1,489 individuos)
+##Filter metadata so we have only the individuals of Zea mays ssp. mexicana and duplicate samples
 R Obtain_mexicana_ID.R
-## Ese script crea una lista de individuos que luego será usada para filtrar la base de datos genómica con plink Indiv_mexicana_1489.txt
+##This script makes a list of the individuals that will be used latter to filter the genomic data (File Indiv_mexicana_1489.txt)
 
-## Lo que seguiría sería eliminar duplicados de base de datos genómica para que sean compatibles las bases de datos
-## Además se van a eliminar los sitios que no estén asignados a ningún cromosoma
-## Ir al directorio donde están los datos
+##Move to the directory were we have our data
+cd /home/jose-carlos-moreno-juarez/Documentos/Maestria/Data/Depth_8/low_stringency
+
+##Eliminate duplicate individuals from the genomic datset
+##We eliminate the sites that are not assigned to any chromosome
 plink --vcf mexicana_Depth8_missing100.vcf --not-chr 0 --const-fid --keep /home/jose-carlos-moreno-juarez/Documentos/Maestria/Metadata/ID_mexicana_plink.txt --make-bed --out D8_Not_0_chr 
-## Nos quedamos con 605,889 sitios (tasa de genotipificado 0.0806728)
+##After this step we have 605,889 sites (genotyping rate 0.0806728)
 
-## Seguiría eliminar sitios multialélicos 
+
+##Eliminate multiallelic sites
 plink2 --bfile D8_Not_0_chr --max-alleles 2 --make-bed --out D8_No_multiallelic
-## No se  eliminaron sitios
+##No sites eliminated
 
-## Filtramos por sitios faltantes. Estoy siguiendo un protocolo de baja astringencia
-## Quitamos sitios con más de 75% de datos faltantes
+##We are following a low stringency protocol for the filtering
+##Eliminate sites with more than 75% of missing data across all samples
 plink --bfile D8_No_multiallelic --geno 0.25 --make-bed --out D8_mexicana_ML75
-## Nos quedamos con 9,431 sitios
+##We are left with 9,431 sites
 
-## Eliminamos individuos con 75% de datos faltantes 
+##Eliminate individuals with more than 75% of missing data
 plink --bfile D8_mexicana_ML75 --mind 0.25 --make-bed --out D8_mexicana_ind_75miss
-## Nos quedamos con 1,234 individuos (tasa de genotipificación 0.911597)
+##We are left with 1,234 individuals (genotyping rate 0.911597)
 
-## Eliminamos sitios que esten ligados (r^2 > 0.2) que se encuentren dentro de ventanas moviles de 1000bp con movimiento de 100
+##Eliminate sites that are under linkage disequilibrium (r^2 > 0.2) in mobile windows of 1000bp with a 100pb sliding
 plink --bfile D8_mexicana_ind_75miss --indep-pairwise 1000 100 0.2
 plink --bfile D8_mexicana_ind_75miss --make-bed --recode --extract plink.prune.in --out D8_mexicana_LD
-## Nos quedamos con 7,413 sitios (tasa de genotipificación 0.912044)
+##We are left with 7,413 sites (genotyping rate 0.912044)
 
-## Eliminamos sitios con un maf menor a 0.05
+
+##We eliminate sites with a minor allele frequency less than 0.05
 plink --bfile D8_mexicana_LD --maf 0.05 --make-bed --out D8_mexicana_05
-## Me quede con 4,964 sitios (tasa de genotipificación 0.912044)
-## Hasta aquí me quedo para analisis de estructura genética
-
-## Transformamos a formato vcf
+##We are left with 4,964 sites (genotyping rate 0.912044)
+##Transform to vcf
 plink --bfile D8_mexicana_05 --recode vcf-iid --out mexicana_D8_ls
+##Until this point, the resulting data set will be used to calculate genetic diversity metrics
 
+
+##The next steps are for generate a data set for population structure analysis
 ###Create a list of related individuals to remove using the algorithm NAToRA
 bash Natora.sh
 ##The result of this script is a list of individual to remove, this list can be used in plink to remove the samples
@@ -54,11 +60,14 @@ R find_candidate_markers.R
 ##We keep only neutral SNPs
 plink --bfile Z.mexicana_filtered --exclude outlier_snps.txt --make-bed --out Z.mexicana_neutral
 plink --bfile Z.mexicana_neutral --recode vcf-iid --out Z.mexicana_neutral
+plink --bfile Z.mexicana_neutral --recode vcf-iid --out Z.mexicana_neutral
+
 ##We make another data set only with the outlier markers
 plink --bfile Z.mexicana_filtered --extract outlier_snps.txt --make-bed --out Z.mexicana_outlier
 plink --bfile Z.mexicana_outlier --recode vcf-iid --out Z.mexicana_outlier
 
 
+##Optional!!!
 ##Find genes with outlier loci
 sed '/^[^#]/ s/^/chr/' /home/jose-carlos-moreno-juarez/Documentos/Maestria/Data/Depth_8/low_stringency/Z.mexicana_outlier.vcf > /home/jose-carlos-moreno-juarez/Documentos/Maestria/Data/Depth_8/low_stringency/Z.mexicana_outlier_chr.vcf
 
